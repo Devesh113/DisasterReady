@@ -7,6 +7,11 @@ const notFoundHandler = require('./middleware/notFoundHandler');
 const authRoutes = require('./routes/auth.routes');
 const disasterRoutes = require('./routes/disaster.routes');
 const alertRoutes = require('./routes/alert.routes');
+const incidentRoutes = require('./routes/incident.routes');
+const incidentController = require('./controllers/incident.controller');
+const { authenticate } = require('./middleware/auth');
+const { validateQuery } = require('./middleware/validate');
+const { queryIncidentSchema } = require('./validators/incident.validator');
 
 const app = express();
 
@@ -55,6 +60,17 @@ app.use('/api/v1/disasters', disasterRoutes);
 
 app.use('/api/alerts', alertRoutes);
 app.use('/api/v1/alerts', alertRoutes);
+
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/v1/incidents', incidentRoutes);
+app.use('/api/incident-reports', incidentRoutes);
+app.use('/api/v1/incident-reports', incidentRoutes);
+
+// User-scoped Incident Reports endpoints (API_CONTRACTS.md line 1863)
+app.get('/api/v1/users/me/incident-reports', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/users/me/incident-reports', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/v1/users/me/incidents', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/users/me/incidents', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
 
 // ==========================================
 // 404 & Centralized Error Handling

@@ -12,10 +12,11 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:status": "prisma migrate status",
     "prisma:studio": "prisma studio",
-    "test": "node tests/auth.test.js && node tests/disaster.test.js && node tests/alert.test.js",
+    "test": "node tests/auth.test.js && node tests/disaster.test.js && node tests/alert.test.js && node tests/incident.test.js",
     "test:auth": "node tests/auth.test.js",
     "test:disaster": "node tests/disaster.test.js",
-    "test:alert": "node tests/alert.test.js"
+    "test:alert": "node tests/alert.test.js",
+    "test:incident": "node tests/incident.test.js"
   },
   "keywords": [
     "disaster-ready",
