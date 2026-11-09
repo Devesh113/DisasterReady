@@ -12,11 +12,15 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:status": "prisma migrate status",
     "prisma:studio": "prisma studio",
-    "test": "node tests/auth.test.js && node tests/disaster.test.js && node tests/alert.test.js && node tests/incident.test.js",
+    "test": "node tests/auth.test.js && node tests/disaster.test.js && node tests/alert.test.js && node tests/incident.test.js && node tests/notification.test.js && node tests/emergencyResource.test.js && node tests/preparednessKit.test.js && node tests/event.test.js",
     "test:auth": "node tests/auth.test.js",
     "test:disaster": "node tests/disaster.test.js",
     "test:alert": "node tests/alert.test.js",
-    "test:incident": "node tests/incident.test.js"
+    "test:incident": "node tests/incident.test.js",
+    "test:notification": "node tests/notification.test.js",
+    "test:emergency-resources": "node tests/emergencyResource.test.js",
+    "test:preparedness-kit": "node tests/preparednessKit.test.js",
+    "test:event": "node tests/event.test.js"
   },
   "keywords": [
     "disaster-ready",

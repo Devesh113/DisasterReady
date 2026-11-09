@@ -248,17 +248,17 @@ Implement all REST API endpoints as defined in `API_CONTRACTS.md`, providing com
 
 ### Deliverables
 
-| # | Resource | Key Endpoints |
-|---|---|---|
-| 1 | **Disasters** | CRUD for disaster types and information |
-| 2 | **Alerts** | Create, list, update, delete alerts (authority); view active alerts (citizen) |
-| 3 | **Events** | CRUD for disaster preparedness events |
-| 4 | **Registrations** | Register/unregister for events; manage participant lists |
-| 5 | **Notifications** | Create and deliver notifications; mark as read |
-| 6 | **Emergency Resources** | CRUD for shelters, hospitals, emergency contacts |
-| 7 | **Incident Reports** | Submit reports (citizen); review and update status (authority) |
-| 8 | **Preparedness Kit** | Manage personal preparedness checklists |
-| 9 | **Simulations** | CRUD for simulation scenarios, attempts, decisions, and scores |
+| # | Resource | Key Endpoints | Status |
+|---|---|---|---|
+| 1 | **Disasters** | CRUD for disaster types and information | ✅ Completed |
+| 2 | **Alerts** | Create, list, update, delete alerts (authority); view active alerts (citizen) | ✅ Completed |
+| 3 | **Events** | CRUD for disaster preparedness events | ✅ Completed |
+| 4 | **Registrations** | Register/unregister for events; manage participant lists | ✅ Completed |
+| 5 | **Notifications** | Create and deliver notifications; mark as read | ✅ Completed |
+| 6 | **Emergency Resources** | CRUD for shelters, hospitals, emergency contacts | ✅ Completed |
+| 7 | **Incident Reports** | Submit reports (citizen); review and update status (authority) | ✅ Completed |
+| 8 | **Preparedness Kit** | Manage personal preparedness checklists | ✅ Completed |
+| 9 | **Simulations** | CRUD for simulation scenarios, attempts, decisions, and scores | Pending |
 
 ### Completion Criteria
 

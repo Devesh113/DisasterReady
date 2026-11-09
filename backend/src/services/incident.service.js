@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const notificationService = require('./notification.service');
 const {
   isValidCoordinates,
   isValidRadius,
@@ -349,6 +350,15 @@ class IncidentService {
         reportedBy: { select: REPORTER_LIST_SELECT },
       },
     });
+
+    // Notify citizen if status was updated
+    if (data.status && data.status !== report.status) {
+      await notificationService.handleIncidentStatusChange({
+        incident: updated,
+        oldStatus: report.status,
+        newStatus: data.status,
+      });
+    }
 
     return updated;
   }
