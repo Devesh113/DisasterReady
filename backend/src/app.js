@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const config = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
 const notFoundHandler = require('./middleware/notFoundHandler');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
@@ -10,15 +12,16 @@ const app = express();
 // Global Middleware
 // ==========================================
 
-// Enable CORS
+// Enable CORS with credentials support
 app.use(cors({
   origin: config.clientOrigin === '*' ? true : config.clientOrigin,
   credentials: true,
 }));
 
-// Body Parsers
+// Body & Cookie Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ==========================================
 // Base / Health Check Route
@@ -37,6 +40,13 @@ app.get('/api/v1/health', (req, res) => {
     message: 'DisasterReady API service is healthy',
   });
 });
+
+// ==========================================
+// API Routes
+// ==========================================
+
+app.use('/api/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // ==========================================
 // 404 & Centralized Error Handling
