@@ -5,6 +5,7 @@ const config = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
 const notFoundHandler = require('./middleware/notFoundHandler');
 const authRoutes = require('./routes/auth.routes');
+const disasterRoutes = require('./routes/disaster.routes');
 
 const app = express();
 
@@ -47,6 +48,9 @@ app.get('/api/v1/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth', authRoutes);
+
+app.use('/api/disasters', disasterRoutes);
+app.use('/api/v1/disasters', disasterRoutes);
 
 // ==========================================
 // 404 & Centralized Error Handling
