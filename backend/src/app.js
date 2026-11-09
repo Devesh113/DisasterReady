@@ -6,6 +6,7 @@ const errorHandler = require('./middleware/errorHandler');
 const notFoundHandler = require('./middleware/notFoundHandler');
 const authRoutes = require('./routes/auth.routes');
 const disasterRoutes = require('./routes/disaster.routes');
+const alertRoutes = require('./routes/alert.routes');
 
 const app = express();
 
@@ -51,6 +52,9 @@ app.use('/api/v1/auth', authRoutes);
 
 app.use('/api/disasters', disasterRoutes);
 app.use('/api/v1/disasters', disasterRoutes);
+
+app.use('/api/alerts', alertRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 
 // ==========================================
 // 404 & Centralized Error Handling
