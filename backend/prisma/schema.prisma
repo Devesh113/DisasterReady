@@ -122,6 +122,7 @@ model User {
   incidentReports  IncidentReport[]
   preparednessItems PreparednessItem[]
   simulationAttempts SimulationAttempt[]
+  sessions         Session[]
 
   @@index([role])
   @@index([email])
@@ -398,4 +399,23 @@ model SimulationDecision {
   @@index([stepNumber])
   @@map("simulation_decisions")
 }
+
+/// Represents an authenticated user session bound to a cryptographically hashed Refresh Token.
+model Session {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // -- Relationships --
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@map("sessions")
+}
+
 
