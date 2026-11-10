@@ -245,7 +245,7 @@ model Notification {
   userId String @map("user_id")
 
   // -- Relations --
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])

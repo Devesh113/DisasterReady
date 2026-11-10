@@ -7,6 +7,18 @@ const notFoundHandler = require('./middleware/notFoundHandler');
 const authRoutes = require('./routes/auth.routes');
 const disasterRoutes = require('./routes/disaster.routes');
 const alertRoutes = require('./routes/alert.routes');
+const incidentRoutes = require('./routes/incident.routes');
+const notificationRoutes = require('./routes/notification.routes');
+const emergencyResourceRoutes = require('./routes/emergencyResource.routes');
+const preparednessKitRoutes = require('./routes/preparednessKit.routes');
+const eventRoutes = require('./routes/event.routes');
+const registrationRoutes = require('./routes/registration.routes');
+const incidentController = require('./controllers/incident.controller');
+const registrationController = require('./controllers/registration.controller');
+const { authenticate } = require('./middleware/auth');
+const { validateQuery } = require('./middleware/validate');
+const { queryIncidentSchema } = require('./validators/incident.validator');
+const { queryRegistrationSchema } = require('./validators/registration.validator');
 
 const app = express();
 
@@ -55,6 +67,36 @@ app.use('/api/v1/disasters', disasterRoutes);
 
 app.use('/api/alerts', alertRoutes);
 app.use('/api/v1/alerts', alertRoutes);
+
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/v1/incidents', incidentRoutes);
+app.use('/api/incident-reports', incidentRoutes);
+app.use('/api/v1/incident-reports', incidentRoutes);
+
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+
+app.use('/api/emergency-resources', emergencyResourceRoutes);
+app.use('/api/v1/emergency-resources', emergencyResourceRoutes);
+
+app.use('/api/preparedness-kit', preparednessKitRoutes);
+app.use('/api/v1/preparedness-kit', preparednessKitRoutes);
+
+app.use('/api/events', eventRoutes);
+app.use('/api/v1/events', eventRoutes);
+
+app.use('/api/registrations', registrationRoutes);
+app.use('/api/v1/registrations', registrationRoutes);
+
+// User-scoped Event Registrations endpoint (API_CONTRACTS.md line 1277)
+app.get('/api/v1/users/me/registrations', authenticate, validateQuery(queryRegistrationSchema), registrationController.getMyRegistrations);
+app.get('/api/users/me/registrations', authenticate, validateQuery(queryRegistrationSchema), registrationController.getMyRegistrations);
+
+// User-scoped Incident Reports endpoints (API_CONTRACTS.md line 1863)
+app.get('/api/v1/users/me/incident-reports', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/users/me/incident-reports', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/v1/users/me/incidents', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
+app.get('/api/users/me/incidents', authenticate, validateQuery(queryIncidentSchema), incidentController.getMyIncidents);
 
 // ==========================================
 // 404 & Centralized Error Handling

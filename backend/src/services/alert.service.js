@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const notificationService = require('./notification.service');
 const {
   isValidCoordinates,
   isValidRadius,
@@ -74,6 +75,14 @@ class AlertService {
       },
       include: ALERT_INCLUDE,
     });
+
+    // Dispatch in-app notifications if the alert is ACTIVE
+    if (alert.status === 'ACTIVE') {
+      await notificationService.handleAlertCreatedOrUpdated({
+        alert,
+        actionType: 'CREATED',
+      });
+    }
 
     return alert;
   }
@@ -286,6 +295,14 @@ class AlertService {
       data: updateData,
       include: ALERT_INCLUDE,
     });
+
+    // If alert status or details updated and alert is ACTIVE, notify users
+    if (updated.status === 'ACTIVE' && (data.status || data.severity || data.description)) {
+      await notificationService.handleAlertCreatedOrUpdated({
+        alert: updated,
+        actionType: 'UPDATED',
+      });
+    }
 
     return updated;
   }
