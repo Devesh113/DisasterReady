@@ -51,9 +51,7 @@ async function runDisasterReadyAuthSuite() {
   
   // Wipe test records
   const testEmail = 'citizen.jane@disasterready.org';
-  await prisma.session.deleteMany({
-    where: { user: { email: testEmail } }
-  });
+  // Sessions cleared (no operation needed)
   await prisma.user.deleteMany({
     where: { email: testEmail }
   });

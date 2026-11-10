@@ -2062,6 +2062,73 @@ Update a preparedness kit item. Users can only update their own items.
 
 ---
 
+### GET `/api/v1/preparedness-kit/stats`
+
+Get readiness statistics and category breakdown for the authenticated user's preparedness kit.
+
+| Property | Value |
+|----------|-------|
+| **Access** | Authenticated |
+
+**Success Response** — `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalItems": 8,
+      "readyItems": 5,
+      "notReadyItems": 3,
+      "readinessPercentage": 63,
+      "categories": [
+        { "category": "medical", "count": 2 },
+        { "category": "food", "count": 3 },
+        { "category": "tools", "count": 3 }
+      ]
+    }
+  },
+  "message": "Preparedness kit statistics retrieved successfully"
+}
+```
+
+---
+
+### PATCH `/api/v1/preparedness-kit/:id/readiness`
+
+Toggle or set the readiness state of a specific item directly.
+
+| Property | Value |
+|----------|-------|
+| **Access** | Authenticated (own items only) |
+
+**Request Body**
+
+```json
+{
+  "isReady": true
+}
+```
+
+**Success Response** — `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "item": {
+      "id": "p2r3e4p5-k6i7-t8i9-0123-456789abcdef",
+      "name": "Bottled Water",
+      "isReady": true,
+      "updatedAt": "2025-05-01T08:00:00.000Z"
+    }
+  },
+  "message": "Item readiness updated successfully"
+}
+```
+
+---
+
 ### DELETE `/api/v1/preparedness-kit/:id`
 
 Remove an item from the user's preparedness kit.
