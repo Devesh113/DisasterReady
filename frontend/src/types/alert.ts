@@ -33,6 +33,30 @@ export interface Alert {
   };
 }
 
+export interface CreateAlertData {
+  title: string;
+  description: string;
+  severity: AlertSeverity;
+  status?: AlertStatus;
+  latitude?: number | null;
+  longitude?: number | null;
+  radius?: number | null;
+  expiresAt?: string | null;
+  disasterId: string;
+}
+
+export interface UpdateAlertData {
+  title?: string;
+  description?: string;
+  severity?: AlertSeverity;
+  status?: AlertStatus;
+  latitude?: number | null;
+  longitude?: number | null;
+  radius?: number | null;
+  expiresAt?: string | null;
+  disasterId?: string;
+}
+
 export interface AlertsResponseData {
   alerts: Alert[];
   pagination: {

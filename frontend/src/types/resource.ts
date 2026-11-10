@@ -24,6 +24,30 @@ export interface EmergencyResource {
   updatedAt: string;
 }
 
+export interface CreateResourceData {
+  name: string;
+  type: ResourceType;
+  description?: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phone?: string | null;
+  capacity?: number | null;
+  isActive?: boolean;
+}
+
+export interface UpdateResourceData {
+  name?: string;
+  type?: ResourceType;
+  description?: string | null;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string | null;
+  capacity?: number | null;
+  isActive?: boolean;
+}
+
 export interface ResourcesResponseData {
   resources: EmergencyResource[];
   pagination: {

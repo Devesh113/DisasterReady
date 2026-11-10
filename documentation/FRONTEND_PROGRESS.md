@@ -2,6 +2,7 @@
 
 > **Phase 1: Foundation, Design System & Complete Public Website** — ✅ COMPLETED
 > **Phase 2: Authentication, Authorization & Complete Citizen Dashboard** — ✅ COMPLETED & AUDITED
+> **Phase 3: Complete Authority Dashboard & Emergency Operations Management** — ✅ COMPLETED
 > **Date:** November 2026
 > **Architecture:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, TanStack Query v5, Axios, Recharts, Leaflet
 
@@ -141,3 +142,67 @@ The following static and build tests were executed and passed cleanly:
    - Native multipart image upload will require backend `multer` middleware and cloud bucket integration (e.g., S3/GCS).
 3. **Independent User Profile Editing**:
    - Backend routes `/api/v1/users/:id` are not yet implemented on the server; profile changes currently route through verified `/auth/me` and `/auth/change-password`.
+
+---
+
+## 7. Phase 3: Complete Authority Dashboard & Emergency Operations Management
+
+### 7.1 Architecture & Role-Based Guarding
+Phase 3 implemented the full **Emergency Operations Center (EOC)** station for `AUTHORITY` and `ADMIN` personnel under `/authority/*`.
+- **Layout Shell (`src/app/authority/layout.tsx`)**:
+  - Guarded strictly by `<ProtectedRoute requiredRole={['AUTHORITY', 'ADMIN']}>`. Citizens attempting direct access are redirected to `/citizen/dashboard`.
+  - Tactical Emergency Operations Center UI with Deep Navy (`#102A43`), DEFCON Status clearance badge, unread notification count badge synced with TanStack Query, and officer profile menu.
+  - Responsive collapsible sidebar with quick jump shortcuts to all 9 operational modules.
+
+### 7.2 Implemented Authority Routes & Modules
+
+| Route | File Path | Integrated APIs / Capabilities |
+| :--- | :--- | :--- |
+| `/authority/dashboard` | `src/app/authority/dashboard/page.tsx` | EOC Command Overview with multi-query metrics (Active Incidents, Critical Advisories, Emergency Resources, Mock Drills), Recharts status distribution charts, recent incidents queue, active alert feed, and operational action links. |
+| `/authority/alerts` | `src/app/authority/alerts/page.tsx` | Alert Broadcasting Studio: Search, filter by severity (`CRITICAL`, `HIGH`, `MODERATE`, `LOW`) and status. Create Alert modal (fetching real disaster taxonomy from `GET /api/v1/disasters`), Edit Alert modal, Resolve action, and alert details viewer. |
+| `/authority/incidents` | `src/app/authority/incidents/page.tsx` | Incident Triage Desk: List and triage all incoming citizen reports (`GET /api/v1/incidents`). Filter by status (`SUBMITTED`, `UNDER_REVIEW`, `VERIFIED`, `RESOLVED`, `REJECTED`). Detailed review modal with citizen reporter info, coordinate maps, and strict status progression transitions. |
+| `/authority/disasters` | `src/app/authority/disasters/page.tsx` | Standard Operating Procedures (SOP) Reference Catalog: Searchable disaster taxonomy browser (`GET /api/v1/disasters`), category filters, and protocol viewer modal. Displays explicit administrative boundary notice stating that catalog creation/updates are reserved for `ADMIN` role. |
+| `/authority/events` | `src/app/authority/events/page.tsx` | Mock Drill Management: Schedule community preparation exercises (`POST /api/v1/events`), configure participant quotas and coordinates, edit drills (`PATCH /api/v1/events/:id`), cancel drills, and jump to attendee rosters. |
+| `/authority/registrations` | `src/app/authority/registrations/page.tsx` | Mock Drill Attendee Rosters: Event selector dropdown, attendee check-in list (`GET /api/v1/events/:id/registrations`), capacity progress meters, search/filter by status (`REGISTERED`, `ATTENDED`, `CANCELLED`), CSV export for offline roll-call, and backend authorization check. |
+| `/authority/resources` | `src/app/authority/resources/page.tsx` | Emergency Infrastructure Directory: Register, edit, and toggle active status of emergency shelters, hospitals, fire stations, and supply depots (`GET/POST/PATCH/DELETE /api/v1/emergency-resources`). GPS auto-detection and capacity overview. |
+| `/authority/notifications` | `src/app/authority/notifications/page.tsx` | Command & Operational Notifications: Read/unread filter tabs, category filter (`ALERT`, `INCIDENT_UPDATE`, `EVENT_REMINDER`, `GENERAL`), mark as read (`PATCH /notifications/:id/read`), mark all as read, and delete. |
+| `/authority/profile` | `src/app/authority/profile/page.tsx` | EOC Officer Profile & Cryptographic Security: Officer identity display, Argon2id master password change form (`PATCH /auth/change-password`), role privileges overview, and session security audit. |
+
+### 7.3 Backend Permission & Architectural Discoveries
+1. **Disaster Catalog Mutations**:
+   - Backend `POST /api/v1/disasters`, `PATCH /api/v1/disasters/:id`, and `DELETE /api/v1/disasters/:id` are strictly restricted to `ADMIN` (`authorize("ADMIN")`).
+   - The `/authority/disasters` page is properly designed as a read-only SOP reference catalog for Authority users, with an administrative notice explaining that creating new disaster taxonomies is reserved for System Administrators.
+2. **Event Registrations / Attendee Lists**:
+   - `GET /api/v1/events/:id/registrations` enforces `user.role === 'ADMIN' || event.organizerId === user.id`.
+   - The `/authority/registrations` page provides an event selector, indicates drills organized by the logged-in officer, and gracefully handles 403 authorization restrictions when an officer inspects another officer's drill.
+3. **Emergency Resource Soft Deactivation**:
+   - For `AUTHORITY`, `DELETE /api/v1/emergency-resources/:id` soft-deactivates the facility (`isActive: false`), while `PATCH` allows re-activating or modifying fields.
+
+---
+
+## 8. Verification & Test Results (Phase 3)
+
+The following verification tests were run and passed cleanly:
+
+1. **Strict TypeScript Compilation**:
+   ```bash
+   $ npm run typecheck
+   > tsc --noEmit
+   # Exit Code 0 (0 errors)
+   ```
+
+2. **ESLint Static Analysis**:
+   ```bash
+   $ npm run lint
+   ✔ No ESLint warnings or errors
+   ```
+
+3. **Next.js Production Build**:
+   ```bash
+   $ npm run build
+   ✓ Compiled successfully in 3.5s
+   ✓ Linting and checking validity of types
+   ✓ Generating static pages (31/31)
+   ✓ Finalizing page optimization
+   # Exit Code 0 (All 31 public, citizen, and authority routes compiled successfully)
+   ```

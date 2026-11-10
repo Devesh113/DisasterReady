@@ -100,7 +100,7 @@ npm run start       # Start production server
 | `/citizen/alerts` | Filterable civil defense alerts feed with 50km radius GPS proximity filtering | `GET /api/v1/alerts` |
 | `/citizen/awareness` | Searchable disaster catalog with direct links to comprehensive hazard safety guides | `GET /api/v1/disasters` |
 | `/citizen/map` | Full-screen interactive Leaflet map rendering shelters, hospitals, and emergency resources | `GET /api/v1/emergency-resources` |
-| `/citizen/reports` | Incident reporting submission form with GPS pin capture and report lifecycle tracking | `POST /api/v1/incidents`, `GET /api/v1/incidents/my-reports` |
+| `/citizen/reports` | Incident reporting submission form with GPS pin capture and report lifecycle tracking | `POST /api/v1/incidents`, `GET /api/v1/incidents/me` |
 | `/citizen/assistance` | 24/7 National Emergency Helplines (112, 108, 101, 100, etc.), crisis guides, and facility phone directory | `GET /api/v1/emergency-resources` |
 | `/citizen/events` | Mock drills directory with "My Registered Drills" tab, instant register and cancel actions | `GET /api/v1/events`, `POST /api/v1/events/:id/register`, `DELETE /api/v1/events/:id/register` |
 | `/citizen/preparedness` | 72-hour survival kit manager, Recharts category breakdown, item readiness checkbox, add/edit modal | `GET/POST/PATCH/DELETE /api/v1/preparedness-kit` |
@@ -108,12 +108,25 @@ npm run start       # Start production server
 | `/citizen/simulations` | 3D virtual simulation briefings (Earthquake, Flood, Wildfire), WebGL controls, system readiness check | Architecture boundary definition |
 | `/citizen/profile` | Citizen identity details, verified contact information, and secure password update form | `GET /api/v1/auth/me`, `PATCH /api/v1/auth/change-password` |
 
+### Authenticated Emergency Authority Command Portal (Phase 3)
+| Route | Description | Backend Integration |
+| :--- | :--- | :--- |
+| `/authority/dashboard` | Emergency Operations Center (EOC) station with real-time triage metrics, Recharts lifecycle & asset breakdown, recent incoming reports, active advisories feed | `GET /api/v1/incidents`, `GET /api/v1/alerts`, `GET /api/v1/emergency-resources`, `GET /api/v1/events` |
+| `/authority/alerts` | Alert Broadcasting Studio: issue civil defense warnings, select disaster from real catalog, define hazard radius, edit alerts, and resolve active warnings | `GET/POST/PATCH/DELETE /api/v1/alerts`, `GET /api/v1/disasters` |
+| `/authority/incidents` | Incident Triage Desk: inspect incoming citizen reports, filter by lifecycle status, view reporter details & photos, and advance status (`SUBMITTED` $\to$ `UNDER_REVIEW` $\to$ `VERIFIED` $\to$ `RESOLVED` / `REJECTED`) | `GET /api/v1/incidents`, `PATCH /api/v1/incidents/:id` |
+| `/authority/disasters` | Standard Operating Procedures (SOP) Reference Catalog: browse disaster taxonomies and emergency response protocols (with explicit Admin mutation boundary indicator) | `GET /api/v1/disasters`, `GET /api/v1/disasters/:id` |
+| `/authority/events` | Mock Drill Management: schedule community preparation drills, configure participant capacities and GPS locations, edit drill times, and cancel obsolete exercises | `GET/POST/PATCH/DELETE /api/v1/events` |
+| `/authority/registrations` | Drill Attendee Rosters: view attendee check-in lists, track capacity quotas, search attendees, export CSV rosters, with authorization enforcement (organizer / admin) | `GET /api/v1/events/:id/registrations`, `GET /api/v1/events` |
+| `/authority/resources` | Emergency Infrastructure Directory: deploy and manage safe shelters, medical units, supply depots, toggle operational availability, and view capacity quotas | `GET/POST/PATCH/DELETE /api/v1/emergency-resources` |
+| `/authority/notifications` | Command Broadcast Center: review operational notices, filter by category/read-state, toggle individual read status, mark all read, and purge records | `GET/PATCH/DELETE /api/v1/notifications` |
+| `/authority/profile` | Officer Profile Desk: cryptographic credentials management, password update form, and role-based privilege overview | `GET /api/v1/auth/me`, `PATCH /api/v1/auth/change-password` |
+
 ---
 
 ## 🗺️ Roadmap & Upcoming Phases
 
 - **Phase 1 (Completed)**: Foundation, Design System & Complete Public Website
 - **Phase 2 (Completed)**: Authentication, Authorization, HttpOnly Token Session & Complete Citizen Dashboard
-- **Phase 3 (Next)**: Authority Command Center & Incident Response Management (`/authority/*`)
-- **Phase 4**: Administrator System Management, Analytics & Audit Logs (`/admin/*`)
+- **Phase 3 (Completed)**: Authority Command Center & Emergency Operations Management (`/authority/*`)
+- **Phase 4 (Next)**: Administrator System Management, Analytics & Audit Logs (`/admin/*`)
 - **Phase 5**: Unity WebGL Simulation Engine Integration & End-to-End Polish

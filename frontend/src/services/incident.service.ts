@@ -58,6 +58,24 @@ export const incidentService = {
   },
 
   /**
+   * List all submitted incident reports across the municipality (AUTHORITY, ADMIN)
+   */
+  async getAllIncidents(params?: QueryIncidentsParams): Promise<IncidentsResponseData> {
+    const res = await apiClient.get<RawUserIncidentsResponse>('/incidents', {
+      params,
+    });
+    return {
+      reports: res.data.data || [],
+      pagination: res.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: (res.data.data || []).length,
+        totalPages: 1,
+      },
+    };
+  },
+
+  /**
    * Get single incident report details
    */
   async getIncidentById(id: string): Promise<IncidentReport> {
@@ -66,11 +84,18 @@ export const incidentService = {
   },
 
   /**
-   * Edit a submitted report (allowed for owner while status is SUBMITTED)
+   * Edit or update an incident report (status transition for AUTHORITY/ADMIN, or content update for owner while SUBMITTED)
    */
   async updateIncident(id: string, data: UpdateIncidentData): Promise<IncidentReport> {
     const res = await apiClient.patch<ApiResponse<IncidentReport>>(`/incidents/${id}`, data);
     return res.data.data;
+  },
+
+  /**
+   * Delete an incident report (ADMIN only)
+   */
+  async deleteIncident(id: string): Promise<void> {
+    await apiClient.delete(`/incidents/${id}`);
   },
 };
 
