@@ -68,10 +68,12 @@ export const resourceService = {
   },
 
   /**
-   * Deactivate an emergency resource (AUTHORITY soft-delete)
+   * Deactivate an emergency resource (AUTHORITY soft-delete) or permanent purge (ADMIN hard delete)
    */
-  async deleteResource(id: string): Promise<void> {
-    await apiClient.delete(`/emergency-resources/${id}`);
+  async deleteResource(id: string, hardDelete = false): Promise<void> {
+    await apiClient.delete(`/emergency-resources/${id}`, {
+      params: hardDelete ? { hard: 'true' } : undefined,
+    });
   },
 };
 

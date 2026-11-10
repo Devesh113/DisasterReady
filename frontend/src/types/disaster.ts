@@ -37,3 +37,19 @@ export interface DisastersResponseData {
 export interface DisasterDetailResponseData {
   disaster: Disaster;
 }
+
+export interface CreateDisasterData {
+  name: string;
+  type: DisasterType;
+  description: string;
+  guidelines?: string | null;
+  iconUrl?: string | null;
+}
+
+export interface UpdateDisasterData {
+  name?: string;
+  type?: DisasterType;
+  description?: string;
+  guidelines?: string | null;
+  iconUrl?: string | null;
+}

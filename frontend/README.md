@@ -121,6 +121,20 @@ npm run start       # Start production server
 | `/authority/notifications` | Command Broadcast Center: review operational notices, filter by category/read-state, toggle individual read status, mark all read, and purge records | `GET/PATCH/DELETE /api/v1/notifications` |
 | `/authority/profile` | Officer Profile Desk: cryptographic credentials management, password update form, and role-based privilege overview | `GET /api/v1/auth/me`, `PATCH /api/v1/auth/change-password` |
 
+### Authenticated System Administrator Station (Phase 4)
+| Route | Description | Backend Integration |
+| :--- | :--- | :--- |
+| `/admin/dashboard` | Executive Command Overview: global operational metrics, Recharts lifecycle & severity charts, live incident stream, active warning broadcasts, quick actions | Multi-query orchestration |
+| `/admin/disasters` | Disaster Taxonomy & SOP Catalog (**Admin Exclusive CRUD**): register new hazards, update descriptions & mitigation guidelines, permanent record deletion | `GET/POST/PATCH/DELETE /api/v1/disasters` |
+| `/admin/alerts` | Warning Studio: dispatch civil defense warnings, update active status, resolve warnings, and permanently purge alerts | `GET/POST/PATCH/DELETE /api/v1/alerts` |
+| `/admin/incidents` | Incident Operations & Ground Triage: monitor incoming reports, inspect reporter identity & coordinates, advance lifecycle status, permanent incident purge | `GET/PATCH/DELETE /api/v1/incidents` |
+| `/admin/events` | Mock Drills & Universal Rosters: schedule evacuation exercises, configure participant quotas, delete drills, and inspect universal attendee check-ins | `GET/POST/PATCH/DELETE /api/v1/events`, `GET /api/v1/events/:id/registrations` |
+| `/admin/resources` | Emergency Infrastructure Directory: deploy safe shelters, trauma hospitals, fire stations, toggle active operational status, permanent hard delete | `GET/POST/PATCH/DELETE /api/v1/emergency-resources` |
+| `/admin/users` | User Account Directory: directory of discovered platform accounts across field operations, role filters, user details modal, status action confirmation | Operational user discovery |
+| `/admin/authorities` | Emergency Authority Management: directory of civil defense officers and drill organizers, officer dossier viewer, provisional onboarding dialog | Operational authority discovery |
+| `/admin/notifications` | System Notifications Console: review operational notices, filter by category/read-state, mark read, mark all read, delete notification | `GET/PATCH/DELETE /api/v1/notifications` |
+| `/admin/settings` | Platform Settings & Runtime Audit: live core API probe (`GET /api/v1/health`), master password update, module integration matrix, security checklist | `GET /api/v1/health`, `PATCH /api/v1/auth/change-password` |
+
 ---
 
 ## 🗺️ Roadmap & Upcoming Phases
@@ -128,5 +142,5 @@ npm run start       # Start production server
 - **Phase 1 (Completed)**: Foundation, Design System & Complete Public Website
 - **Phase 2 (Completed)**: Authentication, Authorization, HttpOnly Token Session & Complete Citizen Dashboard
 - **Phase 3 (Completed)**: Authority Command Center & Emergency Operations Management (`/authority/*`)
-- **Phase 4 (Next)**: Administrator System Management, Analytics & Audit Logs (`/admin/*`)
-- **Phase 5**: Unity WebGL Simulation Engine Integration & End-to-End Polish
+- **Phase 4 (Completed)**: Administrator System Management, Analytics & Platform Governance (`/admin/*`)
+- **Phase 5 (Next)**: Unity WebGL Simulation Engine Integration & End-to-End Polish
