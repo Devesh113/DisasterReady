@@ -292,34 +292,49 @@ describe('Citizen Simulations UnityPlayer Integration Verification', () => {
   const simPageFile = path.join(frontendRoot, 'src/app/citizen/simulations/page.tsx');
   const unityPlayerFile = path.join(frontendRoot, 'src/components/UnityPlayer.tsx');
 
-  test('verifies UnityPlayer component exists and has required iframe', () => {
+  test('verifies UnityPlayer component is reusable with default props and keyboard/fullscreen permissions', () => {
     assert.ok(fs.existsSync(unityPlayerFile), 'UnityPlayer.tsx does not exist');
     const playerContent = fs.readFileSync(unityPlayerFile, 'utf-8');
-    assert.ok(playerContent.includes('src="/unity/index.html"'), 'Missing iframe src /unity/index.html');
-    assert.ok(playerContent.includes('title="DisasterReady Earthquake Simulation"'), 'Missing required iframe title');
+    assert.ok(playerContent.includes("src = '/unity/index.html'") || playerContent.includes('src = "/unity/index.html"'), 'Missing default iframe src /unity/index.html');
+    assert.ok(playerContent.includes("title = 'DisasterReady Earthquake Simulation'") || playerContent.includes('title = "DisasterReady Earthquake Simulation"'), 'Missing default iframe title');
+    assert.ok(playerContent.includes('src={src}'), 'UnityPlayer iframe does not bind dynamic src prop');
+    assert.ok(playerContent.includes('title={title}'), 'UnityPlayer iframe does not bind dynamic title prop');
     assert.ok(playerContent.includes('fullscreen'), 'Missing allow fullscreen attribute');
     assert.ok(playerContent.includes('pointer-lock'), 'Missing allow pointer-lock attribute');
     assert.ok(playerContent.includes('allowFullScreen'), 'Missing allowFullScreen attribute');
     assert.ok(playerContent.includes('h-[650px]'), 'Missing 650px height for complete canvas and footer visibility');
+    assert.ok(playerContent.includes('iframeRef'), 'Missing iframe focus ref management');
   });
 
-  test('verifies simulations page imports UnityPlayer and tracks active sandbox scenario', () => {
+  test('verifies simulations page tracks scenarios by exact IDs', () => {
     assert.ok(fs.existsSync(simPageFile), 'simulations/page.tsx does not exist');
     const pageContent = fs.readFileSync(simPageFile, 'utf-8');
 
     assert.ok(pageContent.includes('UnityPlayer'), 'simulations/page.tsx does not import UnityPlayer');
-    assert.ok(pageContent.includes('activeSandboxScenario'), 'Missing activeSandboxScenario state tracking');
-    assert.ok(pageContent.includes('isEarthquake'), 'Missing isEarthquake conditional check');
-    assert.ok(pageContent.includes('<UnityPlayer />'), 'UnityPlayer component is not mounted in JSX');
+    assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-eq-01'"), 'Missing sim-eq-01 Earthquake ID check');
+    assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-fl-02'"), 'Missing sim-fl-02 Flash Flood ID check');
+    assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-wf-03'"), 'Missing sim-wf-03 Wildfire ID check');
+    assert.ok(pageContent.includes('isPlayable'), 'Missing isPlayable conditional helper');
   });
 
-  test('verifies Earthquake launches UnityPlayer and Flood/Wildfire show in-development message', () => {
+  test('verifies Earthquake and Flash Flood launch UnityPlayer while Wildfire shows Coming Soon', () => {
     const pageContent = fs.readFileSync(simPageFile, 'utf-8');
 
-    // Earthquake mounts UnityPlayer
-    assert.ok(pageContent.includes('{isEarthquake ? (\n          <div className="space-y-4">\n            <UnityPlayer />'), 'UnityPlayer not conditionally mounted on isEarthquake');
+    // Earthquake mounts UnityPlayer with /unity/index.html
+    assert.ok(pageContent.includes('src="/unity/index.html"'), 'Earthquake does not mount UnityPlayer with /unity/index.html');
+    assert.ok(pageContent.includes('title="DisasterReady Earthquake Simulation"'), 'Earthquake does not pass Earthquake Simulation title');
 
-    // Other scenarios show in-development notice
-    assert.ok(pageContent.includes('This 3D simulation scenario is currently in active development and not yet available'), 'Missing in-development message for non-earthquake scenarios');
+    // Flash Flood mounts UnityPlayer with /unity-flood/index.html
+    assert.ok(pageContent.includes('src="/unity-flood/index.html"'), 'Flash Flood does not mount UnityPlayer with /unity-flood/index.html');
+    assert.ok(pageContent.includes('title="DisasterReady Flash Flood Simulation"'), 'Flash Flood does not pass Flash Flood Simulation title');
+
+    // Modal descriptions
+    assert.ok(pageContent.includes("'Interactive Earthquake Simulation'"), 'Missing Interactive Earthquake Simulation description');
+    assert.ok(pageContent.includes("'Interactive Flash Flood Simulation'"), 'Missing Interactive Flash Flood Simulation description');
+    assert.ok(pageContent.includes("'Coming Soon'"), 'Missing Coming Soon description for Wildfire');
+
+    // Wildfire placeholder
+    assert.ok(pageContent.includes('Status: Coming Soon'), 'Missing Coming Soon status indicator for Wildfire');
+    assert.ok(pageContent.includes('max-w-5xl'), 'Missing max-w-5xl sizing for playable simulations');
   });
 });
