@@ -2,7 +2,17 @@
 
 import React, { useRef, useEffect } from 'react';
 
-export default function UnityPlayer() {
+export interface UnityPlayerProps {
+  src?: string;
+  title?: string;
+  instruction?: string;
+}
+
+export default function UnityPlayer({
+  src = '/unity/index.html',
+  title = 'DisasterReady Earthquake Simulation',
+  instruction,
+}: UnityPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const focusIframe = () => {
@@ -22,7 +32,11 @@ export default function UnityPlayer() {
       focusIframe();
     }, 150);
     return () => clearTimeout(timer);
-  }, []);
+  }, [src]);
+
+  const defaultInstruction = title.toLowerCase().includes('flood')
+    ? 'Use your keyboard and mouse to interact with the flash flood simulation. Click the fullscreen control inside the game for a larger view.'
+    : 'Use your keyboard and mouse to interact with the earthquake simulation. Click the fullscreen control inside the game for a larger view.';
 
   return (
     <div className="space-y-3">
@@ -33,8 +47,8 @@ export default function UnityPlayer() {
       >
         <iframe
           ref={iframeRef}
-          src="/unity/index.html"
-          title="DisasterReady Earthquake Simulation"
+          src={src}
+          title={title}
           className="w-full h-[650px] border-0 block"
           tabIndex={0}
           allow="fullscreen; autoplay; pointer-lock; keyboard-map; gamepad"
@@ -43,7 +57,7 @@ export default function UnityPlayer() {
         />
       </div>
       <p className="text-sm text-slate-600">
-        Use your keyboard and mouse to interact with the earthquake simulation. Click the fullscreen control inside the game for a larger view.
+        {instruction || defaultInstruction}
       </p>
     </div>
   );
