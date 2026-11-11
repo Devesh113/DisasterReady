@@ -67,13 +67,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     queryFn: async () => {
       try {
         const res = await apiClient.get<any>('/health');
-        return res.data?.data || { status: 'UP' };
+        const rawData = res?.data?.data ?? res?.data;
+        const status = rawData?.status;
+        if (typeof status === 'string' && status.trim().length > 0) {
+          return {
+            ...(typeof rawData === 'object' && rawData !== null ? rawData : {}),
+            status: status.trim().toUpperCase(),
+          };
+        }
+        return { status: 'UNKNOWN' };
       } catch {
-        return { status: 'UP' };
+        return { status: 'DOWN' };
       }
     },
     refetchInterval: 60000,
   });
+
+  const healthStatus = healthData?.status?.toUpperCase() || 'UNKNOWN';
+
+  const getHealthIndicator = (status: string) => {
+    switch (status) {
+      case 'UP':
+        return {
+          dotClass: 'bg-emerald-500',
+          pingClass: 'bg-emerald-400',
+          badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30',
+          hasPing: true,
+        };
+      case 'DOWN':
+        return {
+          dotClass: 'bg-red-500',
+          pingClass: 'bg-red-400',
+          badgeClass: 'bg-red-500/20 text-red-300 border-red-400/30',
+          hasPing: true,
+        };
+      case 'UNKNOWN':
+      default:
+        return {
+          dotClass: 'bg-slate-400',
+          pingClass: '',
+          badgeClass: 'bg-slate-500/20 text-slate-300 border-slate-400/30',
+          hasPing: false,
+        };
+    }
+  };
+
+  const healthIndicator = getHealthIndicator(healthStatus);
 
   const handleLogout = async () => {
     await logout();
@@ -114,15 +153,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  {healthIndicator.hasPing && (
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full ${healthIndicator.pingClass} opacity-75`}
+                    />
+                  )}
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 ${healthIndicator.dotClass}`}
+                  />
                 </span>
                 <span className="text-[11px] font-medium text-slate-300">
-                  Core API: {healthData?.status || 'UP'}
+                  Core API: {healthStatus}
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                ACTIVE
+              <span
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border ${healthIndicator.badgeClass}`}
+              >
+                {healthStatus}
               </span>
             </div>
           </div>
