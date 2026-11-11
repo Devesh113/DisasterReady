@@ -24,7 +24,8 @@ import {
   Info,
 } from 'lucide-react';
 import { disasterService } from '@/services/disasterService';
-import { getDisasterCurriculum } from '@/lib/disasterCurriculum';
+import { getDisasterCurriculum, DISASTER_CURRICULUM } from '@/lib/disasterCurriculum';
+import { Disaster, DisasterType } from '@/types/disaster';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -46,18 +47,39 @@ export default function DisasterDetailPage() {
   const params = useParams();
   const id = params?.id as string;
 
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
+
+  const normalizedSlug = id ? id.toUpperCase().replace(/-/g, '_') : '';
+  const slugCurriculum =
+    DISASTER_CURRICULUM[normalizedSlug] ||
+    (normalizedSlug === 'HURRICANE' ? DISASTER_CURRICULUM.CYCLONE : null);
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['disaster-detail', id],
     queryFn: () => disasterService.getDisasterById(id),
-    enabled: Boolean(id),
+    enabled: Boolean(id) && isUUID,
   });
 
-  const disaster = data?.disaster;
+  // If fetched from backend, use it; otherwise, if id matches a curriculum slug, synthesize disaster record
+  const disaster: Disaster | undefined =
+    data?.disaster ||
+    (slugCurriculum
+      ? {
+          id: id,
+          name: slugCurriculum.title,
+          type: slugCurriculum.type,
+          description: slugCurriculum.overview,
+          guidelines: slugCurriculum.checklist.join('; '),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      : undefined);
+
   // Get scientific educational curriculum tailored to this disaster type
-  const curriculum = getDisasterCurriculum(disaster?.type);
+  const curriculum = getDisasterCurriculum(disaster?.type || slugCurriculum?.type);
   const Icon = disaster ? (disasterTypeIcons[disaster.type] || Compass) : Compass;
 
-  if (isLoading) {
+  if (isLoading && isUUID) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
         <Skeleton className="h-8 w-36" />

@@ -24,11 +24,17 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Dialog } from '@/components/ui/Dialog';
+import UnityPlayer from '../../../components/UnityPlayer';
 
 export default function CitizenSimulationsPage() {
   const scenarios = simulationService.getStaticScenarios();
   const [selectedScenario, setSelectedScenario] = useState<SimulationScenarioDefinition | null>(null);
   const [isSandboxModalOpen, setIsSandboxModalOpen] = useState(false);
+  const [activeSandboxScenario, setActiveSandboxScenario] = useState<SimulationScenarioDefinition | null>(null);
+
+  const isEarthquake =
+    activeSandboxScenario?.disasterType === 'EARTHQUAKE' ||
+    activeSandboxScenario?.id === 'sim-eq-01';
 
   const getDifficultyBadge = (difficulty: string) => {
     switch (difficulty) {
@@ -88,12 +94,12 @@ export default function CitizenSimulationsPage() {
                 <h3 className="text-base font-bold text-[#102A43]">
                   Unity 3D WebGL Simulation Engine (v2022.3 LTS)
                 </h3>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                  Integration Pipeline Active
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Unity WebGL Build Live
                 </span>
               </div>
               <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                The interactive simulation engine is developed independently by the 3D development team (Module 11). Once the WebGL build is deployed to the asset delivery network, scenarios will run directly inside your browser window with zero plugin downloads.
+                The interactive simulation engine is powered by Unity 3D WebGL and deployed at /unity/index.html. The Earthquake Evacuation simulation is fully integrated and playable directly inside your browser. Additional disaster scenarios (Flood and Wildfire) are currently in active development.
               </p>
             </div>
           </div>
@@ -102,7 +108,10 @@ export default function CitizenSimulationsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsSandboxModalOpen(true)}
+              onClick={() => {
+                setActiveSandboxScenario(null);
+                setIsSandboxModalOpen(true);
+              }}
               className="text-xs font-bold gap-2 text-[#102A43] border-slate-300 hover:bg-slate-100"
             >
               <Gamepad2 className="h-4 w-4 text-[#1769AA]" />
@@ -297,12 +306,21 @@ export default function CitizenSimulationsPage() {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
-              <Info className="h-4 w-4 text-[#F59E0B] flex-shrink-0 mt-0.5" />
-              <span>
-                <strong>Unity WebGL Export in Progress:</strong> This scenario is configured for the Unity 3D engine. Once the WebGL build artifact is uploaded by the 3D developer, this window will mount the live interactive viewport.
-              </span>
-            </div>
+            {selectedScenario.disasterType === 'EARTHQUAKE' ? (
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Unity WebGL Simulation Ready:</strong> The 3D earthquake evacuation simulation is deployed and ready to play. Click &quot;Open Sandbox Environment&quot; below to launch the simulation directly in your browser.
+                </span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+                <Info className="h-4 w-4 text-[#F59E0B] flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Scenario in Development:</strong> The 3D simulation for this disaster scenario is currently in active development. The Earthquake Evacuation simulation is currently available to launch.
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
               <Button
@@ -315,6 +333,7 @@ export default function CitizenSimulationsPage() {
               <Button
                 size="sm"
                 onClick={() => {
+                  setActiveSandboxScenario(selectedScenario);
                   setSelectedScenario(null);
                   setIsSandboxModalOpen(true);
                 }}
@@ -328,49 +347,127 @@ export default function CitizenSimulationsPage() {
       )}
 
       {/* ========================================================
-          6. SANDBOX PRE-FLIGHT CHECK MODAL
+          6. SANDBOX ENVIRONMENT / UNITY PLAYER MODAL
           ======================================================== */}
       <Dialog
         isOpen={isSandboxModalOpen}
-        onClose={() => setIsSandboxModalOpen(false)}
-        title="Simulation Sandbox Environment"
-        description="Hardware diagnostic and WebGL runtime verification container"
-        maxWidth="lg"
+        onClose={() => {
+          setIsSandboxModalOpen(false);
+          setActiveSandboxScenario(null);
+        }}
+        title={
+          activeSandboxScenario
+            ? activeSandboxScenario.title
+            : 'Simulation Sandbox Environment'
+        }
+        description={
+          activeSandboxScenario
+            ? isEarthquake
+              ? 'Interactive 3D Disaster Simulation • Unity WebGL Viewport'
+              : `${activeSandboxScenario.disasterType} Simulation In Development • Coming Soon`
+            : 'Hardware diagnostic and WebGL runtime verification container'
+        }
+        maxWidth="2xl"
+        className={isEarthquake ? 'max-w-5xl' : 'max-w-2xl'}
       >
-        <div className="space-y-4 text-xs">
-          <div className="aspect-video w-full rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center p-6 text-center text-white relative overflow-hidden">
-            <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
-              <Gamepad2 className="h-8 w-8 text-blue-400 animate-pulse" />
+        {isEarthquake ? (
+          <div className="space-y-4">
+            <UnityPlayer />
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsSandboxModalOpen(false);
+                  setActiveSandboxScenario(null);
+                }}
+                className="bg-[#102A43] hover:bg-[#172B4D] text-white"
+              >
+                Close Simulation
+              </Button>
             </div>
-            <h4 className="text-base font-bold">Unity WebGL 2.0 Viewport Host</h4>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm">
-              Ready to mount Canvas [1280x720] upon receipt of Build/DisasterReady.wasm from the Unity build runner.
-            </p>
-            <div className="mt-4 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-[11px] text-emerald-300 font-mono">
-                WebGL 2.0 Driver: Available & Accelerated
-              </span>
+          </div>
+        ) : activeSandboxScenario ? (
+          <div className="space-y-4 text-xs">
+            <div className="aspect-video w-full rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center p-6 text-center text-white relative overflow-hidden">
+              <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                {activeSandboxScenario.disasterType === 'FLOOD' ? (
+                  <Droplets className="h-8 w-8 text-blue-400 animate-pulse" />
+                ) : (
+                  <Flame className="h-8 w-8 text-red-400 animate-pulse" />
+                )}
+              </div>
+              <h4 className="text-base font-bold">
+                {activeSandboxScenario.title}
+              </h4>
+              <p className="text-xs text-slate-400 mt-2 max-w-md">
+                This 3D simulation scenario is currently in active development and not yet available.
+                Please launch the Earthquake simulation to practice active disaster evacuation protocols.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-mono text-[11px]">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                Status: In Development (Coming Soon)
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 space-y-1">
+              <div className="font-bold">Playable Simulation Available</div>
+              <p className="text-[11px] text-blue-800 leading-relaxed">
+                The <strong>Earthquake: Multi-Story Office Evacuation</strong> simulation is fully integrated and playable right now. You can launch it from the scenario catalog.
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsSandboxModalOpen(false);
+                  setActiveSandboxScenario(null);
+                }}
+                className="bg-[#102A43] hover:bg-[#172B4D] text-white"
+              >
+                Close
+              </Button>
             </div>
           </div>
+        ) : (
+          <div className="space-y-4 text-xs">
+            <div className="aspect-video w-full rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center p-6 text-center text-white relative overflow-hidden">
+              <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                <Gamepad2 className="h-8 w-8 text-blue-400 animate-pulse" />
+              </div>
+              <h4 className="text-base font-bold">Unity WebGL 2.0 Viewport Host</h4>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                WebGL 2.0 driver verified and hardware accelerated. Unity WebGL build is deployed at /unity/index.html.
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-[11px] text-emerald-300 font-mono">
+                  WebGL 2.0 Driver: Available & Accelerated
+                </span>
+              </div>
+            </div>
 
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 space-y-1">
-            <div className="font-bold text-[#102A43]">Teammate Responsibility Boundary</div>
-            <p className="text-[11px] leading-relaxed">
-              As established in TEAM_RESPONSIBILITIES.md, Module 11 (3D Disaster Simulation Engine) is authored independently in Unity/C#. The frontend architecture provides full containment, controls guidance, and scenario briefing interfaces.
-            </p>
-          </div>
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 space-y-1">
+              <div className="font-bold text-[#102A43]">System Verification Status</div>
+              <p className="text-[11px] leading-relaxed">
+                Your browser supports WebGL 2.0 graphics acceleration. The Earthquake Evacuation simulation is deployed and ready to run directly in your browser.
+              </p>
+            </div>
 
-          <div className="flex justify-end pt-2">
-            <Button
-              size="sm"
-              onClick={() => setIsSandboxModalOpen(false)}
-              className="bg-[#102A43] hover:bg-[#172B4D] text-white"
-            >
-              Done
-            </Button>
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsSandboxModalOpen(false);
+                  setActiveSandboxScenario(null);
+                }}
+                className="bg-[#102A43] hover:bg-[#172B4D] text-white"
+              >
+                Done
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Dialog>
     </div>
   );

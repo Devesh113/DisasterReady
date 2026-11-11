@@ -66,11 +66,12 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Production Build & Linting
+### 5. Production Build, Testing & Linting
 ```bash
 npm run typecheck   # Strict TypeScript checks (0 errors)
 npm run lint        # Next.js ESLint checks (0 warnings/errors)
-npm run build       # Production bundle build (22 routes compiled)
+npm test            # Automated route, RBAC, and curriculum test suite (12 tests)
+npm run build       # Production bundle build (41 routes compiled)
 npm run start       # Start production server
 ```
 
@@ -137,10 +138,76 @@ npm run start       # Start production server
 
 ---
 
-## 🗺️ Roadmap & Upcoming Phases
+## 🗺️ Development Roadmap Status
 
-- **Phase 1 (Completed)**: Foundation, Design System & Complete Public Website
-- **Phase 2 (Completed)**: Authentication, Authorization, HttpOnly Token Session & Complete Citizen Dashboard
-- **Phase 3 (Completed)**: Authority Command Center & Emergency Operations Management (`/authority/*`)
-- **Phase 4 (Completed)**: Administrator System Management, Analytics & Platform Governance (`/admin/*`)
-- **Phase 5 (Next)**: Unity WebGL Simulation Engine Integration & End-to-End Polish
+- **Phase 1 (Completed)**: Foundation, Design System & Complete Public Website (11 routes)
+- **Phase 2 (Completed)**: Authentication, Authorization, HttpOnly Token Session & Complete Citizen Dashboard (11 routes)
+- **Phase 3 (Completed)**: Authority Command Center & Emergency Operations Management (9 routes)
+- **Phase 4 (Completed)**: Administrator System Management, Analytics & Platform Governance (10 routes)
+- **Phase 5 (Completed)**: Complete Application Integration, Testing, Security & Final Production Polish (All 41 routes integrated, automated test suite, Unity boundary contract, zero TypeScript/ESLint/Build errors)
+
+---
+
+## 🎮 Unity WebGL Simulation Engine (Module 11 Boundary)
+
+The 3D interactive virtual disaster simulation engine is developed independently by the 3D development team (`unity-game/`). To prevent blocking frontend delivery while maintaining production-grade integration readiness, the frontend implements an architectural boundary with the following contract:
+
+### 1. Delivery Path & Asset Embedding
+- Target build output: `frontend/public/unity/`
+- Build artifacts: `Build/Build.loader.js`, `Build/Build.framework.js`, `Build/Build.data`, `Build/Build.wasm`
+- Embedding wrapper: `CitizenSimulationsPage` (`src/app/citizen/simulations/page.tsx`) contains a responsive 16:9 canvas container with a WebGL 2.0 pre-flight hardware diagnostic probe.
+
+### 2. Browser-to-Unity Messaging Protocol
+```javascript
+// Sending command into Unity instance
+unityInstance.SendMessage('GameManager', 'LoadScenario', scenarioId);
+
+// Receiving simulation results from Unity WebGL via window event
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'SIMULATION_COMPLETE') {
+    const { scenarioId, score, survivalTime, decisions } = event.data.payload;
+    // Dispatches to POST /api/v1/simulations/attempts (when backend Module 11 is mounted)
+  }
+});
+```
+
+### 3. Static Scenario Definitions (`src/services/simulation.service.ts`)
+- `sim-eq-01`: Multi-Story Office Earthquake Evacuation (Intermediate, 10 min)
+- `sim-fl-02`: Suburban Flash Flood Inundation Escape (Beginner, 8 min)
+- `sim-wf-03`: Rural Wildfire Perimeter Defense (Advanced, 12 min)
+
+---
+
+## 📋 Missing Backend Dependencies Report
+
+The following backend endpoints are specified in the system design or roadmap but are not yet implemented or mounted in `backend/src/app.js`:
+
+1. **User Account Administration (`/api/v1/users`) — Module 12**:
+   - `GET /api/v1/users` (List users with pagination, role filter, search)
+   - `PATCH /api/v1/users/:id/status` (Toggle user active status `isActive: boolean`)
+   - `POST /api/v1/users` (Admin provisioning of Authority / Admin accounts)
+   - *Frontend Adaptation*: `/admin/users` and `/admin/authorities` aggregate accounts from operational records (reporters, drill organizers, attendees, active session) and provide transparent boundary notices.
+
+2. **Simulation Endpoints (`/api/v1/simulations/*`) — Module 11**:
+   - `GET /api/v1/simulations/scenarios` (List database-backed simulation scenarios)
+   - `POST /api/v1/simulations/attempts` (Record initial simulation attempt)
+   - `PATCH /api/v1/simulations/attempts/:id` (Submit final score & decision audit trail)
+   - *Frontend Adaptation*: `CitizenSimulationsPage` loads verified static scenario definitions and pre-flight diagnostics without fabricating fake APIs.
+
+---
+
+## 🧪 Testing & Verification Commands
+
+```bash
+# 1. Run unit & component integration test suite (12 tests across 5 suites)
+npm test
+
+# 2. Run strict TypeScript compiler verification (0 errors)
+npm run typecheck
+
+# 3. Run ESLint static code analysis (0 warnings / 0 errors)
+npm run lint
+
+# 4. Compile complete production bundle (41/41 routes static & dynamic)
+npm run build
+```
