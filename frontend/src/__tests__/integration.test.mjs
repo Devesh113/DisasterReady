@@ -306,18 +306,23 @@ describe('Citizen Simulations UnityPlayer Integration Verification', () => {
     assert.ok(playerContent.includes('iframeRef'), 'Missing iframe focus ref management');
   });
 
-  test('verifies simulations page tracks scenarios by exact IDs', () => {
+  test('verifies simulations page tracks scenarios by exact IDs and filters out Wildfire', () => {
     assert.ok(fs.existsSync(simPageFile), 'simulations/page.tsx does not exist');
     const pageContent = fs.readFileSync(simPageFile, 'utf-8');
 
     assert.ok(pageContent.includes('UnityPlayer'), 'simulations/page.tsx does not import UnityPlayer');
     assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-eq-01'"), 'Missing sim-eq-01 Earthquake ID check');
     assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-fl-02'"), 'Missing sim-fl-02 Flash Flood ID check');
-    assert.ok(pageContent.includes("activeSandboxScenario?.id === 'sim-wf-03'"), 'Missing sim-wf-03 Wildfire ID check');
+    assert.ok(pageContent.includes("sc.id !== 'sim-wf-03'"), 'Wildfire scenario sim-wf-03 is not filtered out');
+    assert.ok(
+      pageContent.includes("sc.disasterType !== 'WILDFIRE'"),
+      'Wildfire disaster type is not filtered out'
+    );
+    assert.ok(!pageContent.includes('isWildfire'), 'Obsolete isWildfire logic should be removed');
     assert.ok(pageContent.includes('isPlayable'), 'Missing isPlayable conditional helper');
   });
 
-  test('verifies Earthquake and Flash Flood launch UnityPlayer while Wildfire shows Coming Soon', () => {
+  test('verifies Earthquake and Flash Flood launch UnityPlayer and Wildfire is completely excluded', () => {
     const pageContent = fs.readFileSync(simPageFile, 'utf-8');
 
     // Earthquake mounts UnityPlayer with /unity/index.html
@@ -331,10 +336,10 @@ describe('Citizen Simulations UnityPlayer Integration Verification', () => {
     // Modal descriptions
     assert.ok(pageContent.includes("'Interactive Earthquake Simulation'"), 'Missing Interactive Earthquake Simulation description');
     assert.ok(pageContent.includes("'Interactive Flash Flood Simulation'"), 'Missing Interactive Flash Flood Simulation description');
-    assert.ok(pageContent.includes("'Coming Soon'"), 'Missing Coming Soon description for Wildfire');
 
-    // Wildfire placeholder
-    assert.ok(pageContent.includes('Status: Coming Soon'), 'Missing Coming Soon status indicator for Wildfire');
+    // Wildfire placeholder & status removed
+    assert.ok(!pageContent.includes('Status: Coming Soon'), 'Wildfire Coming Soon status indicator should be removed');
+    assert.ok(!pageContent.includes('Wildfire: Rural Perimeter Defense & Evacuation'), 'Wildfire scenario details should be excluded');
     assert.ok(pageContent.includes('max-w-5xl'), 'Missing max-w-5xl sizing for playable simulations');
   });
 });
