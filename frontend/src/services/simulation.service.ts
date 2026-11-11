@@ -25,7 +25,7 @@ export const KNOWN_SCENARIOS: SimulationScenarioDefinition[] = [
     id: 'sim-eq-01',
     title: 'Earthquake: Multi-Story Office Evacuation',
     disasterType: 'EARTHQUAKE',
-    difficulty: 'INTERMEDIATE',
+    difficulty: 'BEGINNER',
     estimatedMinutes: 10,
     description:
       'Practice realistic Drop, Cover, and Hold On mechanics during sudden tremor shaking, followed by safe structural stairwell evacuation, aftershock avoidance, and hazard identification.',
@@ -35,7 +35,7 @@ export const KNOWN_SCENARIOS: SimulationScenarioDefinition[] = [
     id: 'sim-fl-02',
     title: 'Flash Flood: Suburban Inundation Escape',
     disasterType: 'FLOOD',
-    difficulty: 'BEGINNER',
+    difficulty: 'INTERMEDIATE',
     estimatedMinutes: 8,
     description:
       'Navigate rising floodwaters in a neighborhood setting. Make critical timing decisions on when to evacuate, choose high-ground escape routes, and avoid electrified waters.',
