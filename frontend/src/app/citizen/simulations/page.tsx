@@ -99,7 +99,7 @@ export default function CitizenSimulationsPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                The interactive simulation engine is powered by Unity 3D WebGL. The Flash Flood Inundation simulation is fully integrated and playable directly inside your browser, while the Earthquake Simulator section is staged and ready for replacement WebGL build integration.
+                The interactive simulation engine is powered by Unity 3D WebGL. Both the Earthquake Evacuation and Flash Flood Inundation simulations are fully integrated and playable directly inside your browser.
               </p>
             </div>
           </div>
@@ -306,21 +306,17 @@ export default function CitizenSimulationsPage() {
               </div>
             </div>
 
-            {selectedScenario.id === 'sim-fl-02' ? (
-              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>Unity WebGL Simulation Ready:</strong> The 3D flash flood simulation is deployed and ready to play. Click &quot;Open Sandbox Environment&quot; below to launch the simulation directly in your browser.
-                </span>
-              </div>
-            ) : (
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-start gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-[#1769AA] flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>Simulator Staging Ready:</strong> The Earthquake Simulator area is configured and ready for mounting a replacement Unity WebGL build. Click &quot;Open Sandbox Environment&quot; below to access the simulator staging environment.
-                </span>
-              </div>
-            )}
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Unity WebGL Simulation Ready:</strong> The 3D{' '}
+                {selectedScenario.disasterType === 'EARTHQUAKE' ||
+                selectedScenario.id === 'sim-eq-01'
+                  ? 'earthquake evacuation'
+                  : 'flash flood'}{' '}
+                simulation is deployed and ready to play. Click &quot;Open Sandbox Environment&quot; below to launch the simulation directly in your browser.
+              </span>
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
               <Button
@@ -372,24 +368,10 @@ export default function CitizenSimulationsPage() {
       >
         {isEarthquake ? (
           <div className="space-y-4">
-            <div className="w-full h-[650px] rounded-xl border border-slate-800 bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-white relative overflow-hidden shadow-inner">
-              <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
-                <Building className="h-8 w-8 text-amber-400 animate-pulse" />
-              </div>
-              <h4 className="text-base font-bold text-white">
-                Earthquake Simulation Staging Viewport
-              </h4>
-              <p className="text-xs text-slate-400 mt-2 max-w-md">
-                The previous Earthquake simulation build has been unmounted. This viewport container is staged and ready for integrating the replacement Unity WebGL build.
-              </p>
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-mono text-[11px]">
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                Ready for Replacement WebGL Build
-              </div>
-            </div>
-            <p className="text-sm text-slate-600">
-              Earthquake Simulator area is active and ready for replacement Unity WebGL integration.
-            </p>
+            <UnityPlayer
+              src="/unity/index.html"
+              title="DisasterReady Earthquake Simulation"
+            />
             <div className="flex justify-end pt-2 border-t border-slate-100">
               <Button
                 size="sm"
@@ -399,7 +381,7 @@ export default function CitizenSimulationsPage() {
                 }}
                 className="bg-[#102A43] hover:bg-[#172B4D] text-white"
               >
-                Close Viewport
+                Close Simulation
               </Button>
             </div>
           </div>
@@ -430,7 +412,7 @@ export default function CitizenSimulationsPage() {
               </div>
               <h4 className="text-base font-bold">Unity WebGL 2.0 Viewport Host</h4>
               <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                WebGL 2.0 container for interactive 3D simulations. The Flash Flood simulation is deployed at /unity-flood/index.html and the Earthquake viewport is staged for replacement build.
+                WebGL 2.0 container for interactive 3D simulations. Unity WebGL builds are deployed at /unity/index.html and /unity-flood/index.html.
               </p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-400" />
@@ -443,7 +425,7 @@ export default function CitizenSimulationsPage() {
             <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 space-y-1">
               <div className="font-bold text-[#102A43]">Runtime Compatibility & Requirements</div>
               <p className="text-[11px] leading-relaxed">
-                WebGL 2.0 support and hardware graphics acceleration in browser settings are recommended for running the interactive simulations. The Flash Flood simulation is deployed and the Earthquake simulator area is ready for integration.
+                WebGL 2.0 support and hardware graphics acceleration in browser settings are recommended for running the interactive simulations. The Earthquake and Flash Flood simulations are deployed and available to launch.
               </p>
             </div>
 
