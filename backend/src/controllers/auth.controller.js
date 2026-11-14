@@ -74,7 +74,18 @@ class AuthController {
    */
   async refresh(req, res, next) {
     try {
-      const rawRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+      const rawRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+      if (!rawRefreshToken) {
+        clearRefreshTokenCookie(res);
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Refresh token is missing',
+          },
+        });
+      }
 
       const { newAccessToken, newRefreshToken, user } = await tokenService.rotateSession(rawRefreshToken);
 
@@ -96,8 +107,10 @@ class AuthController {
    */
   async logout(req, res, next) {
     try {
-      const rawRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-      await tokenService.revokeSession(rawRefreshToken);
+      const rawRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+      if (rawRefreshToken) {
+        await tokenService.revokeSession(rawRefreshToken);
+      }
 
       clearRefreshTokenCookie(res);
 
