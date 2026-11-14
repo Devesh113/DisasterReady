@@ -322,12 +322,12 @@ describe('Citizen Simulations UnityPlayer Integration Verification', () => {
     assert.ok(pageContent.includes('isPlayable'), 'Missing isPlayable conditional helper');
   });
 
-  test('verifies Earthquake and Flash Flood launch UnityPlayer and Wildfire is completely excluded', () => {
+  test('verifies Flash Flood launches UnityPlayer, Earthquake game is unmounted and staged, and Wildfire is completely excluded', () => {
     const pageContent = fs.readFileSync(simPageFile, 'utf-8');
 
-    // Earthquake mounts UnityPlayer with /unity/index.html
-    assert.ok(pageContent.includes('src="/unity/index.html"'), 'Earthquake does not mount UnityPlayer with /unity/index.html');
-    assert.ok(pageContent.includes('title="DisasterReady Earthquake Simulation"'), 'Earthquake does not pass Earthquake Simulation title');
+    // Earthquake game is unmounted from simulations page while staging viewport is preserved
+    assert.ok(!pageContent.includes('src="/unity/index.html"'), 'Old Earthquake game should be unmounted from simulations page');
+    assert.ok(pageContent.includes('Earthquake Simulation Staging Viewport'), 'Earthquake Simulator area should be staged for replacement build');
 
     // Flash Flood mounts UnityPlayer with /unity-flood/index.html
     assert.ok(pageContent.includes('src="/unity-flood/index.html"'), 'Flash Flood does not mount UnityPlayer with /unity-flood/index.html');
