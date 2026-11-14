@@ -33,6 +33,7 @@ import { ApiErrorResponse } from '@/types/api';
 
 export default function CitizenEventsPage() {
   const [activeTab, setActiveTab] = useState<'browse' | 'my-registrations'>('browse');
+  const [regFilter, setRegFilter] = useState<'ACTIVE' | 'CANCELLED' | 'ALL'>('ACTIVE');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState<number>(1);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -73,11 +74,20 @@ export default function CitizenEventsPage() {
   const pagination = eventsData?.pagination;
   const myRegistrations = myRegData?.registrations || [];
 
-  // Map of event IDs user is registered for
+  // Active vs Cancelled registrations
+  const activeRegistrations = myRegistrations.filter((r) => r.status === 'REGISTERED');
+  const cancelledRegistrations = myRegistrations.filter((r) => r.status === 'CANCELLED');
+
+  const displayedRegistrations =
+    regFilter === 'ACTIVE'
+      ? activeRegistrations
+      : regFilter === 'CANCELLED'
+      ? cancelledRegistrations
+      : myRegistrations;
+
+  // Map of event IDs user is actively registered for
   const registeredEventIds = new Set(
-    myRegistrations
-      .filter((r) => r.status === 'REGISTERED')
-      .map((r) => r.eventId)
+    activeRegistrations.map((r) => r.eventId)
   );
 
   // Register mutation
@@ -146,9 +156,9 @@ export default function CitizenEventsPage() {
             }`}
           >
             <span>My Registrations</span>
-            {myRegistrations.length > 0 && (
+            {activeRegistrations.length > 0 && (
               <span className="h-4 px-1.5 rounded-full bg-[#1769AA] text-white text-[10px] font-bold inline-flex items-center">
-                {myRegistrations.length}
+                {activeRegistrations.length}
               </span>
             )}
           </button>
@@ -354,6 +364,40 @@ export default function CitizenEventsPage() {
           ======================================================== */}
       {activeTab === 'my-registrations' && (
         <div className="space-y-4">
+          {/* Sub-Filter Switcher */}
+          <div className="flex items-center gap-2 pb-2 border-b border-[#D9E2EC]">
+            <button
+              onClick={() => setRegFilter('ACTIVE')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                regFilter === 'ACTIVE'
+                  ? 'bg-[#102A43] text-white'
+                  : 'bg-slate-100 text-[#627D98] hover:text-[#102A43]'
+              }`}
+            >
+              Active Drills ({activeRegistrations.length})
+            </button>
+            <button
+              onClick={() => setRegFilter('CANCELLED')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                regFilter === 'CANCELLED'
+                  ? 'bg-[#102A43] text-white'
+                  : 'bg-slate-100 text-[#627D98] hover:text-[#102A43]'
+              }`}
+            >
+              Cancelled History ({cancelledRegistrations.length})
+            </button>
+            <button
+              onClick={() => setRegFilter('ALL')}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                regFilter === 'ALL'
+                  ? 'bg-[#102A43] text-white'
+                  : 'bg-slate-100 text-[#627D98] hover:text-[#102A43]'
+              }`}
+            >
+              All Records ({myRegistrations.length})
+            </button>
+          </div>
+
           {myRegLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-20 w-full" />
@@ -365,60 +409,98 @@ export default function CitizenEventsPage() {
               message="Could not retrieve your event registrations."
               onRetry={() => refetchMyRegs()}
             />
-          ) : myRegistrations.length > 0 ? (
+          ) : displayedRegistrations.length > 0 ? (
             <div className="space-y-3">
-              {myRegistrations.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="rounded-xl border border-[#D9E2EC] bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        {reg.status}
-                      </span>
-                      <span className="text-xs text-[#627D98]">
-                        Registered on {formatDate(reg.createdAt)}
-                      </span>
-                    </div>
+              {displayedRegistrations.map((reg) => {
+                const isCancelled = reg.status === 'CANCELLED';
+                const isUpcoming = reg.event?.status === 'UPCOMING';
 
-                    <h3 className="font-bold text-base text-[#102A43]">
-                      {reg.event?.title || 'Mock Drill Session'}
-                    </h3>
-
-                    {reg.event && (
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-[#627D98] pt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 text-[#1769AA]" />
-                          {formatDateTime(reg.event.startDate)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-[#DC3545]" />
-                          {reg.event.location}
+                return (
+                  <div
+                    key={reg.id}
+                    className={`rounded-xl border p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+                      isCancelled
+                        ? 'border-slate-200 bg-slate-50/70 opacity-85'
+                        : 'border-[#D9E2EC] bg-white'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        {isCancelled ? (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 text-slate-700 border border-slate-300">
+                            CANCELLED
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            CONFIRMED
+                          </span>
+                        )}
+                        <span className="text-xs text-[#627D98]">
+                          {isCancelled ? 'Cancelled registration' : `Registered on ${formatDate(reg.createdAt)}`}
                         </span>
                       </div>
-                    )}
-                  </div>
 
-                  <div className="shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      isLoading={cancelMutation.isPending}
-                      onClick={() => cancelMutation.mutate(reg.eventId)}
-                      className="text-xs text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      Cancel Registration
-                    </Button>
+                      <h3 className={`font-bold text-base ${isCancelled ? 'text-slate-600 line-through' : 'text-[#102A43]'}`}>
+                        {reg.event?.title || 'Mock Drill Session'}
+                      </h3>
+
+                      {reg.event && (
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-[#627D98] pt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5 text-[#1769AA]" />
+                            {formatDateTime(reg.event.startDate)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5 text-[#DC3545]" />
+                            {reg.event.location}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="shrink-0">
+                      {isCancelled ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!isUpcoming}
+                          isLoading={registerMutation.isPending}
+                          onClick={() => registerMutation.mutate(reg.eventId)}
+                          className="text-xs text-[#1769AA] border-blue-200 hover:bg-blue-50"
+                        >
+                          Register Again
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          isLoading={cancelMutation.isPending}
+                          onClick={() => cancelMutation.mutate(reg.eventId)}
+                          className="text-xs text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          Cancel Registration
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <EmptyState
               icon={UserCheck}
-              title="You Have No Active Drill Registrations"
-              description="Register for an upcoming mock drill from the available sessions to practice emergency evacuation."
+              title={
+                regFilter === 'ACTIVE'
+                  ? 'No Active Drill Registrations'
+                  : regFilter === 'CANCELLED'
+                  ? 'No Cancelled Drills'
+                  : 'No Drill Registrations Found'
+              }
+              description={
+                regFilter === 'ACTIVE'
+                  ? 'You currently have 0 active registrations. Browse available drills to join an upcoming session.'
+                  : 'No drill registration records match this filter.'
+              }
               actionLabel="Browse Available Drills"
               onAction={() => setActiveTab('browse')}
             />
