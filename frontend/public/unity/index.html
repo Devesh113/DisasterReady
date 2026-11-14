@@ -1,225 +1,670 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | DisasterManagementVR</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  <script src="TemplateData/profiler.js"></script>
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <div id="unity-fullscreen-container">
-        <canvas id="unity-canvas" width="960" height="600" tabindex="0"></canvas>
-        <div id="unity-loading-container">
-          <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-              <div id="unity-progress-bar-full"></div>
-            </div>
-          </div>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DisasterReady — 3D Earthquake Survival Simulation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0a0f18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+    #simulation-container { position: relative; width: 100%; height: 100%; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* HUD OVERLAY */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .stat-badge {
+      background: rgba(16, 42, 67, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 10px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .stat-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+    .stat-val { font-size: 20px; font-weight: 800; font-family: monospace; color: #f8fafc; }
+
+    .health-bar {
+      width: 140px; height: 10px; background: rgba(255,255,255,0.2);
+      border-radius: 6px; overflow: hidden; margin-top: 4px;
+    }
+    .health-fill { width: 100%; height: 100%; background: #22c55e; transition: width 0.3s; }
+
+    .seismic-alert {
+      background: rgba(220, 38, 38, 0.9);
+      border: 2px solid #ef4444;
+      animation: pulse 1s infinite alternate;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: none;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+      to { transform: scale(1.04); box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
+    }
+
+    /* CENTER OBJECTIVE / RETICLE */
+    .crosshair {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 10px; height: 10px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .crosshair::before, .crosshair::after {
+      content: ''; position: absolute; background: rgba(255,255,255,0.6);
+    }
+    .crosshair::before { top: 4px; left: -8px; width: 26px; height: 2px; }
+    .crosshair::after { top: -8px; left: 4px; width: 2px; height: 26px; }
+
+    .action-prompt {
+      position: absolute;
+      top: 58%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #38bdf8;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: none;
+      animation: float 2s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -50%); }
+      50% { transform: translate(-50%, -60%); }
+    }
+
+    /* BOTTOM CONTROLS GUIDE */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .controls-hint {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: #cbd5e1;
+      display: flex;
+      gap: 12px;
+    }
+    .key-btn {
+      background: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #fff;
+    }
+
+    /* START & MISSION OVER SCREENS */
+    #start-screen, #debrief-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 15, 24, 0.92);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    .dialog-box {
+      max-width: 520px;
+      background: #102a43;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    .btn-action {
+      background: #1769aa;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(23, 105, 170, 0.4);
+    }
+    .btn-action:hover {
+      background: #1b7ccc;
+      transform: translateY(-2px);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="simulation-container">
+    <canvas id="earthquake-canvas"></canvas>
+
+    <div id="hud">
+      <div class="top-bar">
+        <div class="stat-badge">
+          <div class="stat-title">Tactical Status</div>
+          <div class="stat-val" id="mission-status">STANDBY</div>
+        </div>
+        <div class="seismic-alert" id="seismic-alert">
+          🚨 MAGNITUDE 6.8 SEISMIC EVENT IN PROGRESS
+        </div>
+        <div class="stat-badge">
+          <div class="stat-title">Survivor Health</div>
+          <div class="stat-val" id="health-text">100%</div>
+          <div class="health-bar"><div class="health-fill" id="health-fill"></div></div>
         </div>
       </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">DisasterManagementVR</div>
+
+      <div class="crosshair"></div>
+      <div class="action-prompt" id="action-prompt">PRESS [C] TO DROP, COVER & HOLD</div>
+
+      <div class="bottom-bar">
+        <div class="controls-hint">
+          <span><span class="key-btn">W A S D</span> Walk</span>
+          <span><span class="key-btn">MOUSE</span> Look</span>
+          <span><span class="key-btn">C</span> Drop & Cover</span>
+          <span><span class="key-btn">E</span> Interact / Gas Switch</span>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-title">Survival Score</div>
+          <div class="stat-val" id="score-text">0 PTS</div>
+        </div>
       </div>
     </div>
-    <script>
-      let canvas = document.querySelector("#unity-canvas");
-      let fullscreenContainer = document.querySelector("#unity-fullscreen-container");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+    <!-- START MISSION MODAL -->
+    <div id="start-screen">
+      <div class="dialog-box">
+        <div style="font-size: 38px; margin-bottom: 8px;">🏢 ⚡</div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px; color: #f8fafc;">
+          Earthquake Survival Mission: Sector 7 Office
+        </h2>
+        <p style="font-size: 13px; color: #cbd5e1; line-height: 1.6; margin-bottom: 20px;">
+          You are inside a 3rd-floor municipal office when a sudden <strong>Magnitude 6.8</strong> earthquake strikes.
+          Structural elements will shake and overhead ceiling fixtures may collapse.
+        </p>
+        <div style="text-align: left; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 14px; font-size: 12px; color: #94a3b8; line-height: 1.8;">
+          <div>✅ <strong>Objective 1:</strong> Rapidly get under the heavy wooden conference desk.</div>
+          <div>✅ <strong>Objective 2:</strong> Press <strong>[C]</strong> to Drop, Cover & Hold On until main tremors stop.</div>
+          <div>✅ <strong>Objective 3:</strong> Isolate the main gas valve with <strong>[E]</strong> and head to the Fire Exit.</div>
+        </div>
+        <button class="btn-action" id="start-btn">BEGIN 3D SIMULATION</button>
+      </div>
+    </div>
+
+    <!-- DEBRIEF MODAL -->
+    <div id="debrief-screen" style="display: none;">
+      <div class="dialog-box">
+        <div style="font-size: 40px; margin-bottom: 8px;" id="debrief-icon">🏆</div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;" id="debrief-title">
+          Mission Completed!
+        </h2>
+        <p style="font-size: 13px; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;" id="debrief-desc">
+          You successfully followed the NDMA & FEMA Drop-Cover-Hold protocols!
+        </p>
+        <div class="stat-badge" style="display: inline-block; padding: 12px 24px; margin-bottom: 16px;">
+          <div class="stat-title">Final Evaluated Score</div>
+          <div class="stat-val" style="color: #38bdf8; font-size: 28px;" id="debrief-score">100 / 100</div>
+        </div>
+        <div>
+          <button class="btn-action" id="retry-btn">RETRY MISSION</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // DISASTERREADY 3D EARTHQUAKE SIMULATION ENGINE
+    // =========================================================================
+    let scene, camera, renderer;
+    let isGameRunning = false;
+    let isQuakeActive = false;
+    let quakeIntensity = 0;
+    let health = 100;
+    let score = 0;
+    let isCovered = false;
+    let gasTurnedOff = false;
+    let missionPhase = 0; // 0: Normal, 1: Quake Hits, 2: Tremor Subsides, 3: Gas Isolated, 4: Evacuated
+    let phaseTimer = 0;
+
+    // Movement & Controls
+    const keys = {};
+    const player = {
+      x: 0, y: 1.6, z: 4,
+      pitch: 0, yaw: 0,
+      speed: 0.08
+    };
+
+    // Environment Objects
+    let deskMesh, gasValveMesh, doorMesh;
+    let fallingDebris = [];
+    let audioCtx = null;
+
+    function initAudio() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      } catch (e) {
+        console.warn('Web Audio not supported', e);
+      }
+    }
+
+    function playRumbleSound() {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(45, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 8);
+      
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 9);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 9);
+    }
+
+    function initThree() {
+      const container = document.getElementById('simulation-container');
+      const canvas = document.getElementById('earthquake-canvas');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      scene.fog = new THREE.FogExp2(0x0f172a, 0.04);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(player.x, player.y, player.z);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const mainLight = new THREE.PointLight(0xfff7ed, 1.2, 25);
+      mainLight.position.set(0, 4.5, 0);
+      scene.add(mainLight);
+
+      // Room Construction (12m x 12m office room)
+      buildRoom();
+
+      // Setup Controls & Events
+      setupInput();
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function buildRoom() {
+      // Floor (Wooden parquet)
+      const floorGeo = new THREE.PlaneGeometry(14, 14);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.6 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      scene.add(floor);
+
+      // Ceiling
+      const ceilGeo = new THREE.PlaneGeometry(14, 14);
+      const ceilMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 });
+      const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
+      ceiling.position.y = 5;
+      ceiling.rotation.x = Math.PI / 2;
+      scene.add(ceiling);
+
+      // Walls
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 });
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 5), wallMat);
+      backWall.position.set(0, 2.5, -7);
+      scene.add(backWall);
+
+      const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 5), wallMat);
+      frontWall.position.set(0, 2.5, 7);
+      frontWall.rotation.y = Math.PI;
+      scene.add(frontWall);
+
+      const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 5), wallMat);
+      leftWall.position.set(-7, 2.5, 0);
+      leftWall.rotation.y = Math.PI / 2;
+      scene.add(leftWall);
+
+      const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 5), wallMat);
+      rightWall.position.set(7, 2.5, 0);
+      rightWall.rotation.y = -Math.PI / 2;
+      scene.add(rightWall);
+
+      // Heavy Conference Desk (Center)
+      const deskTopGeo = new THREE.BoxGeometry(3.2, 0.15, 1.8);
+      const deskMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.4 });
+      deskMesh = new THREE.Mesh(deskTopGeo, deskMat);
+      deskMesh.position.set(0, 1.1, 0);
+      scene.add(deskMesh);
+
+      // Desk Legs
+      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.1);
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      [
+        [-1.4, 0.55, -0.7],
+        [1.4, 0.55, -0.7],
+        [-1.4, 0.55, 0.7],
+        [1.4, 0.55, 0.7]
+      ].forEach(([lx, ly, lz]) => {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(lx, ly, lz);
+        scene.add(leg);
+      });
+
+      // Gas Emergency Shutoff Valve (Left Wall)
+      const valveBoxGeo = new THREE.BoxGeometry(0.4, 0.6, 0.2);
+      const valveMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c });
+      gasValveMesh = new THREE.Mesh(valveBoxGeo, valveMat);
+      gasValveMesh.position.set(-6.8, 1.5, -2);
+      scene.add(gasValveMesh);
+
+      // Exit Door (Right Wall)
+      const doorGeo = new THREE.BoxGeometry(0.1, 3.2, 1.8);
+      const doorMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+      doorMesh = new THREE.Mesh(doorGeo, doorMat);
+      doorMesh.position.set(6.9, 1.6, -3);
+      scene.add(doorMesh);
+
+      // Exit Sign
+      const signGeo = new THREE.BoxGeometry(0.15, 0.4, 0.9);
+      const signMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+      const sign = new THREE.Mesh(signGeo, signMat);
+      sign.position.set(6.85, 3.5, -3);
+      scene.add(sign);
+
+      // Bookshelves & Cabinets
+      const shelfGeo = new THREE.BoxGeometry(0.8, 4.0, 3.5);
+      const shelfMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const shelf = new THREE.Mesh(shelfGeo, shelfMat);
+      shelf.position.set(-6.5, 2.0, 3);
+      scene.add(shelf);
+    }
+
+    function spawnDebris() {
+      const debrisGeo = new THREE.BoxGeometry(0.3, 0.2, 0.4);
+      const debrisMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+      for (let i = 0; i < 18; i++) {
+        const deb = new THREE.Mesh(debrisGeo, debrisMat);
+        deb.position.set(
+          (Math.random() - 0.5) * 10,
+          4.8 + Math.random() * 2,
+          (Math.random() - 0.5) * 10
+        );
+        deb.velY = 0;
+        deb.active = false;
+        scene.add(deb);
+        fallingDebris.push(deb);
+      }
+    }
+
+    function setupInput() {
+      window.addEventListener('keydown', (e) => {
+        keys[e.key.toLowerCase()] = true;
+
+        // Crouch / Drop & Cover [C]
+        if (e.key.toLowerCase() === 'c') {
+          isCovered = !isCovered;
+          player.y = isCovered ? 0.6 : 1.6;
         }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
+
+        // Interact [E]
+        if (e.key.toLowerCase() === 'e') {
+          checkInteraction();
         }
-        updateBannerVisibility();
+      });
+
+      window.addEventListener('keyup', (e) => {
+        keys[e.key.toLowerCase()] = false;
+      });
+
+      // Pointer lock for immersive camera look
+      const canvas = document.getElementById('earthquake-canvas');
+      canvas.addEventListener('click', () => {
+        if (isGameRunning) canvas.requestPointerLock();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement === canvas) {
+          player.yaw -= e.movementX * 0.0025;
+          player.pitch -= e.movementY * 0.0025;
+          player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+        }
+      });
+    }
+
+    function checkInteraction() {
+      // Check Distance to Gas Valve (-6.8, 1.5, -2)
+      const distGas = Math.hypot(player.x - (-6.8), player.z - (-2));
+      if (distGas < 2.0 && !gasTurnedOff && missionPhase >= 2) {
+        gasTurnedOff = true;
+        gasValveMesh.material.color.setHex(0x22c55e); // Green
+        score += 35;
+        document.getElementById('score-text').innerText = score + ' PTS';
+        showTemporaryNotice('✅ Main gas valve successfully shut off! Head to the exit door.');
+        missionPhase = 3;
       }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/EarthquakeWebBuild_Test.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/EarthquakeWebBuild_Test.data",
-        frameworkUrl: buildUrl + "/EarthquakeWebBuild_Test.framework.js",
-        codeUrl: buildUrl + "/EarthquakeWebBuild_Test.wasm",
-        streamingAssetsUrl: "StreamingAssets",
+      // Check Distance to Exit Door (6.9, 1.6, -3)
+      const distDoor = Math.hypot(player.x - 6.9, player.z - (-3));
+      if (distDoor < 2.0 && missionPhase >= 3) {
+        score += 35;
+        finishMission(true);
+      }
+    }
 
-        // If you have a custom web site structure, or want to place multiple Unity build instances on the same page,
-        // you can pass fullscreenElementID: "my-unity-fullscreen-container-id", in this configuration field to
-        // explicitly point to the element tree root that is displayed in fullscreen mode.
-        fullscreenElementID: "unity-fullscreen-container",
+    function showTemporaryNotice(text) {
+      const prompt = document.getElementById('action-prompt');
+      prompt.innerText = text;
+      prompt.style.display = 'block';
+      setTimeout(() => { prompt.style.display = 'none'; }, 4000);
+    }
 
-        companyName: "DefaultCompany",
-        productName: "DisasterManagementVR",
-        productVersion: "0.1.0",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+    function startMission() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('earthquake-canvas').requestPointerLock();
+      initAudio();
+      spawnDebris();
 
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
+      isGameRunning = true;
+      missionPhase = 0;
+      score = 30; // Starting baseline
+      health = 100;
+      phaseTimer = 0;
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+      document.getElementById('mission-status').innerText = 'NORMAL';
+      document.getElementById('score-text').innerText = score + ' PTS';
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
+      // 4 seconds in: Earthquake strikes!
+      setTimeout(() => {
+        if (!isGameRunning) return;
+        triggerEarthquake();
+      }, 4000);
+    }
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
+    function triggerEarthquake() {
+      missionPhase = 1;
+      isQuakeActive = true;
+      quakeIntensity = 0.22;
+      playRumbleSound();
 
+      document.getElementById('mission-status').innerText = 'SEISMIC EVENT';
+      document.getElementById('mission-status').style.color = '#ef4444';
+      document.getElementById('seismic-alert').style.display = 'block';
+      document.getElementById('action-prompt').innerText = 'GET UNDER THE DESK & PRESS [C]!';
+      document.getElementById('action-prompt').style.display = 'block';
 
+      // Activate Falling Debris
+      fallingDebris.forEach((deb) => { deb.active = true; });
+
+      // Tremor lasts 12 seconds
+      setTimeout(() => {
+        if (!isGameRunning) return;
+        stopEarthquake();
+      }, 12000);
+    }
+
+    function stopEarthquake() {
+      isQuakeActive = false;
+      quakeIntensity = 0;
+      missionPhase = 2;
+
+      document.getElementById('mission-status').innerText = 'AFTERSHOCK BUFFER';
+      document.getElementById('mission-status').style.color = '#f59e0b';
+      document.getElementById('seismic-alert').style.display = 'none';
+      document.getElementById('action-prompt').innerText = 'TREMORS SUBSIDING! Turn off Gas Valve at the wall [E]';
+    }
+
+    function finishMission(survived) {
+      isGameRunning = false;
+      document.exitPointerLock?.();
+
+      const debrief = document.getElementById('debrief-screen');
+      const title = document.getElementById('debrief-title');
+      const desc = document.getElementById('debrief-desc');
+      const scoreTxt = document.getElementById('debrief-score');
+      const icon = document.getElementById('debrief-icon');
+
+      debrief.style.display = 'flex';
+      scoreTxt.innerText = `${Math.min(100, score)} / 100`;
+
+      if (survived && health > 0) {
+        icon.innerText = '🏆';
+        title.innerText = 'Mission Accomplished: Evacuated Safely!';
+        desc.innerText = 'Outstanding response! You dropped and covered under the desk, protected vital organs, shut off volatile gas lines, and evacuated via the designated exit path.';
       } else {
-        // Desktop style: Render the game canvas container in a window that can be maximized to fullscreen:
-        function resizeUnityViewport() {
-          var w = window.innerWidth;
-          var h = window.innerHeight;
-          var footerHeight = 38;
-          var maxAvailableHeight = h - footerHeight;
+        icon.innerText = '⚠️';
+        title.innerText = 'Mission Failed: Structural Injury';
+        desc.innerText = 'Critical injury sustained from falling ceiling debris. Always remember to Drop, Cover, and Hold On beneath heavy furniture immediately when shaking begins.';
+      }
+    }
 
-          var baseWidth = 960;
-          var baseHeight = 600;
-          var aspect = baseWidth / baseHeight;
+    // MAIN GAME LOOP
+    function animate() {
+      requestAnimationFrame(animate);
 
-          var targetW = Math.min(baseWidth, w);
-          var targetH = targetW / aspect;
+      if (isGameRunning) {
+        // Player Movement
+        let dx = 0, dz = 0;
+        if (keys['w']) dz -= 1;
+        if (keys['s']) dz += 1;
+        if (keys['a']) dx -= 1;
+        if (keys['d']) dx += 1;
 
-          if (targetH > maxAvailableHeight && maxAvailableHeight > 0) {
-            targetH = maxAvailableHeight;
-            targetW = targetH * aspect;
-          }
+        if (dx !== 0 || dz !== 0) {
+          const len = Math.hypot(dx, dz);
+          dx /= len; dz /= len;
 
-          fullscreenContainer.style.width = Math.floor(targetW) + "px";
-          fullscreenContainer.style.height = Math.floor(targetH) + "px";
-          var footer = document.querySelector("#unity-footer");
-          if (footer) {
-            footer.style.width = Math.floor(targetW) + "px";
+          const forwardX = -Math.sin(player.yaw);
+          const forwardZ = -Math.cos(player.yaw);
+          const rightX = Math.cos(player.yaw);
+          const rightZ = -Math.sin(player.yaw);
+
+          player.x += (forwardX * -dz + rightX * dx) * player.speed;
+          player.z += (forwardZ * -dz + rightZ * dx) * player.speed;
+
+          // Room boundary limits
+          player.x = Math.max(-6.2, Math.min(6.2, player.x));
+          player.z = Math.max(-6.2, Math.min(6.2, player.z));
+        }
+
+        // Camera Orientation
+        camera.rotation.order = 'YXZ';
+        let shakeX = 0, shakeY = 0, shakeZ = 0;
+
+        if (isQuakeActive) {
+          shakeX = (Math.random() - 0.5) * quakeIntensity;
+          shakeY = (Math.random() - 0.5) * quakeIntensity;
+          shakeZ = (Math.random() - 0.5) * quakeIntensity;
+
+          // Check if player is safely under desk
+          const distToDeskCenter = Math.hypot(player.x, player.z);
+          const isUnderDesk = distToDeskCenter < 1.4 && isCovered;
+
+          // If out in the open during quake, take damage from falling debris
+          if (!isUnderDesk) {
+            health -= 0.18;
+            health = Math.max(0, health);
+            document.getElementById('health-fill').style.width = health + '%';
+            document.getElementById('health-text').innerText = Math.round(health) + '%';
+            if (health < 40) document.getElementById('health-fill').style.background = '#ef4444';
+
+            if (health <= 0) finishMission(false);
           }
         }
-        resizeUnityViewport();
-        window.addEventListener("resize", resizeUnityViewport);
-      }
 
-      function focusGameCanvas() {
-        window.focus();
-        if (canvas) {
-          canvas.focus();
+        camera.position.set(player.x + shakeX, player.y + shakeY, player.z + shakeZ);
+        camera.rotation.y = player.yaw;
+        camera.rotation.x = player.pitch;
+
+        // Falling Debris Physics
+        if (isQuakeActive) {
+          fallingDebris.forEach((deb) => {
+            if (deb.active) {
+              deb.position.y -= 0.08 + Math.random() * 0.04;
+              if (deb.position.y <= 0.1) {
+                deb.position.y = 5.0 + Math.random() * 2;
+                deb.position.x = (Math.random() - 0.5) * 10;
+                deb.position.z = (Math.random() - 0.5) * 10;
+              }
+            }
+          });
         }
       }
-      window.addEventListener("click", focusGameCanvas);
-      window.addEventListener("mousedown", focusGameCanvas);
-      window.addEventListener("load", focusGameCanvas);
-      if (canvas) {
-        canvas.addEventListener("click", focusGameCanvas);
-        canvas.addEventListener("mousedown", focusGameCanvas);
-      }
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        const loadingContainer = document.querySelector("#unity-loading-container");
-        const progressBarFull = document.querySelector("#unity-progress-bar-full");
+      renderer.render(scene, camera);
+    }
 
-        createUnityInstance(canvas, config, (progress) => {
-          if (progress < 1) {
-            loadingContainer.style.display = "block";
-            progressBarFull.style.width = 100 * progress + "%";
-          } else {
-            loadingContainer.style.display = "none";
-          }
-        }).then((unityInstance) => {
-                focusGameCanvas();
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
+    // INITIALIZE
+    initThree();
+    animate();
 
-                var profile = unityProfiler.createButton(unityInstance);
-                profile.style.marginLeft = '5px';
-                document.querySelector("#unity-build-title").appendChild(profile);
-
-                // Unloading web content from DOM so that browser GC can run can be tricky to get right.
-                // This code snippet shows how to correctly implement a Unity content Unload mechanism to a web page.
-
-                // Unloading Unity content enables a web page to reclaim the memory used by Unity, e.g. for
-                // the purpose of later loading another Unity content instance on the _same_ web page.
-
-                // When using this functionality, take caution to carefully make sure to clear all JavaScript code,
-                // DOM element and event handler references to the old content you may have retained, or
-                // otherwise the browser's garbage collector will be unable to reclaim the old page.
-
-                // N.b. Unity content does _not_ need to be manually unloaded when the user is navigating away from
-                // the current page to another web page. The browser will take care to clear memory of old visited
-                // pages automatically. This functionality is only needed if you want to switch between loading
-                // multiple Unity builds on a single web page.
-                var quit = document.createElement("button");
-                quit.style = "margin-left: 5px; background-color: lightgray; border: none; padding: 5px; cursor: pointer";
-                quit.innerHTML = "Unload";
-                document.querySelector("#unity-build-title").appendChild(quit);
-                quit.onclick = () => {
-                  // Quit Unity application execution
-                  unityInstance.Quit().then(() => {
-                    unityProfiler.shutDown();
-                    // Remove DOM elements from the page so GC can run
-                    document.querySelector("#unity-container").remove();
-                    canvas = null;
-                    fullscreenContainer = null;
-                    // Remover script elements from the page so GC can run
-                    script.remove();
-                    script = null;
-                  });
-                };
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+    document.getElementById('start-btn').addEventListener('click', startMission);
+    document.getElementById('retry-btn').addEventListener('click', () => {
+      document.getElementById('debrief-screen').style.display = 'none';
+      startMission();
+    });
+  </script>
+</body>
 </html>
