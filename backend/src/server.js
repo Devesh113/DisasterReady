@@ -12,7 +12,7 @@ const startServer = async () => {
     console.warn('⚠️ DATABASE_URL not set. Server starting without active database connection.');
   }
 
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 DisasterReady Backend Server running on port ${PORT}`);
     console.log(`🌐 Health check available at: http://localhost:${PORT}/api/v1/health`);
     console.log(`📦 Environment: ${config.nodeEnv}`);
